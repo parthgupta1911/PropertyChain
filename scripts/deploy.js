@@ -5,16 +5,18 @@ const tokens = (n) => {
 };
 
 async function main() {
-  // Setup accounts
+  /*
+  The destructuring assignment [buyer, seller, inspector, lender] assigns the first four signer objects from the array 
+  to the respective variables, effectively giving you four different Ethereum accounts to work with in your application.
+  */
   const [buyer, seller, inspector, lender] = await ethers.getSigners();
 
-  // Deploy Real Estate contract
   const RealEstate = await ethers.getContractFactory("RealEstate");
   const realEstate = await RealEstate.deploy();
   await realEstate.deployed();
 
-  console.log(`Deployed Real Estate Contract at: ${realEstate.address}`);
-  console.log(`Minting 3 properties...\n`);
+  console.log(`Deployed Real Estate Contract here: ${realEstate.address}`);
+  console.log(`now Minting 3 properties...\n`);
 
   for (let i = 0; i < 3; i++) {
     const transaction = await realEstate
@@ -40,15 +42,22 @@ async function main() {
   console.log(`Deployed Escrow Contract at: ${escrow.address}`);
   console.log(`Listing 3 properties...\n`);
 
+  // Approve properties...
+  // as thw seller owns the nft thus we have to approve that the escorw contract can handle opperate on sellers behalf
+  /* const approvalTransaction = await nftContract.approve(
+    approvedOperator,
+    tokenID
+  );
+  */
+
   for (let i = 0; i < 3; i++) {
-    // Approve properties...(required to transer nfts to escorow)
     let transaction = await realEstate
       .connect(seller)
       .approve(escrow.address, i + 1);
     await transaction.wait();
   }
 
-  // Listing properties...
+  // Listing properties(transfer ownership to escrow contract,set purchase price and earnest amount)
   transaction = await escrow
     .connect(seller)
     .list(1, buyer.address, tokens(20), tokens(10));
@@ -64,7 +73,7 @@ async function main() {
     .list(3, buyer.address, tokens(10), tokens(5));
   await transaction.wait();
 
-  console.log(`Finished.`);
+  console.log(`Fin.`);
 }
 
 main().catch((error) => {
